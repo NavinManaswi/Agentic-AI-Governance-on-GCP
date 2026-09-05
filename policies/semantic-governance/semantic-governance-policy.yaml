@@ -1,0 +1,80 @@
+# ============================================================================
+# Semantic Governance Policy (SGP)
+# Gemini Enterprise Agent Platform service for intelligent policy enforcement
+# ============================================================================
+
+apiVersion: gemini-enterprise.cloud.google.com/v1
+kind: SemanticGovernancePolicy
+metadata:
+  name: agent-semantic-policy
+  namespace: YOUR_PROJECT_ID
+spec:
+  description: "Semantic Governance Policy for agentic AI"
+
+  # ==========================================================================
+  # Tool Call Validation Rules
+  # Ensures agent tool calls align with user intent and organizational rules
+  # ==========================================================================
+  
+  rules:
+    - name: "validate_tool_intent"
+      description: "Validate that tool calls match user intent"
+      condition:
+        tool_category: "data_access"
+      action: "ALLOW"
+      parameters:
+        validation_type: "intent_alignment"
+        confidence_threshold: 0.8
+
+    - name: "restrict_financial_tools"
+      description: "Restrict financial tool access to authorized agents"
+      condition:
+        tool_category: "financial"
+        agent_clearance: "high"
+      action: "ALLOW"
+      parameters:
+        require_approval: true
+
+    - name: "block_prohibited_actions"
+      description: "Block prohibited actions"
+      condition:
+        action_type:
+          - "delete"
+          - "modify_permissions"
+          - "data_exfiltration"
+      action: "DENY"
+
+    - name: "cost_control"
+      description: "Enforce cost limits on tool calls"
+      condition:
+        estimated_cost: "> 100.0"
+      action: "REQUIRE_APPROVAL"
+      parameters:
+        approval_workflow: "human_escalation"
+
+  # ==========================================================================
+  # Semantic Analysis Configuration
+  # ==========================================================================
+
+  semantic_analysis:
+    enabled: true
+    model: "gemini-2.0-flash"
+    intent_classification: true
+    entity_recognition: true
+    sentiment_analysis: false
+
+  # ==========================================================================
+  # Compliance Enforcement
+  # ==========================================================================
+
+  compliance:
+    - framework: "CSA_ATF"
+      rules:
+        - "identity_verification"
+        - "least_privilege"
+        - "runtime_governance"
+    - framework: "OWASP_Agentic_Top_10"
+      rules:
+        - "asi01_goal_hijack"
+        - "asi02_tool_misuse"
+        - "asi03_privilege_abuse"
