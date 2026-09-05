@@ -1,0 +1,87 @@
+# ============================================================================
+# Cloud IAM Policies for AI Agents
+# Agent Identity provides per-agent cryptographic identity for least-privilege access
+# ============================================================================
+
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicy
+metadata:
+  name: agent-identity-policy
+spec:
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/YOUR_PROJECT_ID
+
+---
+# ============================================================================
+# Custom IAM Role for Agents
+# ============================================================================
+
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMCustomRole
+metadata:
+  name: agent-role
+spec:
+  title: "AI Agent Role"
+  description: "Least-privilege role for AI agents"
+  permissions:
+    - storage.objects.get
+    - storage.objects.list
+    - bigquery.tables.getData
+    - bigquery.jobs.create
+    - cloudkms.cryptoKeyVersions.useToDecrypt
+    - logging.logEntries.list
+
+---
+# ============================================================================
+# IAM Policy Binding for Agent Identity
+# Agent Identity can be used as a principal in IAM policies
+# ============================================================================
+
+apiVersion: iam.cnrm.cloud.google.com/v1beta1
+kind: IAMPolicyMember
+metadata:
+  name: agent-identity-binding
+spec:
+  member: "principal://iam.googleapis.com/projects/YOUR_PROJECT_ID/locations/global/workloadIdentityPools/agent-pool/subject/agent-{agent_id}"
+  role: "projects/YOUR_PROJECT_ID/roles/agent-role"
+  resourceRef:
+    apiVersion: resourcemanager.cnrm.cloud.google.com/v1beta1
+    kind: Project
+    external: projects/YOUR_PROJECT_ID
+
+---
+# ============================================================================
+# Context-Aware Access (CAA) Policy
+# Enforces DPoP (Demonstrating Proof-of-Possession) for token theft protection
+# ============================================================================
+
+apiVersion: accesscontextmanager.cnrm.cloud.google.com/v1beta1
+kind: AccessPolicy
+metadata:
+  name: agent-access-policy
+spec:
+  title: "Agent Access Policy"
+  scopes: ["projects/YOUR_PROJECT_ID"]
+
+---
+# ============================================================================
+# Service Perimeter for Agent Isolation
+# ============================================================================
+
+apiVersion: accesscontextmanager.cnrm.cloud.google.com/v1beta1
+kind: ServicePerimeter
+metadata:
+  name: agent-perimeter
+spec:
+  title: "Agent Service Perimeter"
+  status:
+    resources: ["projects/YOUR_PROJECT_ID"]
+    restrictedServices:
+      - storage.googleapis.com
+      - bigquery.googleapis.com
+      - cloudkms.googleapis.com
+    vpcAccessibleServices:
+      allowedServices:
+        - RESTRICTED_SERVICES
