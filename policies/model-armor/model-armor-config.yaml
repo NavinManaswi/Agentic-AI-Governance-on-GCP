@@ -1,0 +1,99 @@
+# ============================================================================
+# Model Armor Configuration
+# Protects against prompt injection, sensitive data leakage, and content safety
+# ============================================================================
+
+apiVersion: aiplatform.googleapis.com/v1
+kind: ModelArmorConfig
+metadata:
+  name: agent-model-armor
+  namespace: YOUR_PROJECT_ID
+spec:
+  description: "Model Armor configuration for agentic AI"
+
+  # ==========================================================================
+  # Prompt Injection Protection
+  # ==========================================================================
+  
+  prompt_injection:
+    enabled: true
+    detection_mode: "BLOCK"
+    confidence_threshold: 0.7
+    types:
+      - "direct_prompt_injection"
+      - "indirect_prompt_injection"
+      - "jailbreak"
+      - "code_injection"
+
+  # ==========================================================================
+  # Data Loss Prevention (DLP)
+  # ==========================================================================
+  
+  dlp:
+    enabled: true
+    action: "BLOCK"
+    inspection_rules:
+      - name: "pii_detection"
+        info_types:
+          - "EMAIL_ADDRESS"
+          - "PHONE_NUMBER"
+          - "CREDIT_CARD_NUMBER"
+          - "US_SOCIAL_SECURITY_NUMBER"
+          - "PERSON_NAME"
+        min_confidence: 0.7
+      - name: "financial_data"
+        info_types:
+          - "BANK_ACCOUNT_NUMBER"
+          - "ROUTING_NUMBER"
+        min_confidence: 0.8
+
+  # ==========================================================================
+  # Content Safety
+  # ==========================================================================
+  
+  content_safety:
+    enabled: true
+    filters:
+      - category: "HATE_SPEECH"
+        threshold: "HIGH"
+        action: "BLOCK"
+      - category: "HARASSMENT"
+        threshold: "HIGH"
+        action: "BLOCK"
+      - category: "SEXUALLY_EXPLICIT"
+        threshold: "HIGH"
+        action: "BLOCK"
+      - category: "VIOLENCE"
+        threshold: "HIGH"
+        action: "BLOCK"
+
+  # ==========================================================================
+  # Tool Call Screening
+  # ==========================================================================
+  
+  tool_call_screening:
+    enabled: true
+    validation:
+      - check: "tool_authorization"
+        action: "BLOCK"
+      - check: "tool_parameters"
+        validation_type: "schema"
+        action: "BLOCK"
+      - check: "tool_output"
+        validation_type: "dlp_scan"
+        action: "BLOCK"
+
+  # ==========================================================================
+  # Response Screening
+  # ==========================================================================
+  
+  response_screening:
+    enabled: true
+    checks:
+      - type: "dlp_scan"
+        action: "BLOCK"
+      - type: "content_safety"
+        action: "BLOCK"
+      - type: "groundedness"
+        action: "BLOCK"
+        threshold: 0.8
