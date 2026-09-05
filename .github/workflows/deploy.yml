@@ -1,0 +1,110 @@
+name: Deploy Agentic AI Governance on GCP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'terraform/**'
+      - 'policies/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate JSON files
+        run: |
+          for file in policies/**/*.json audit-framework/*.json; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              jq empty "$file" || exit 1
+            fi
+          done
+
+      - name: Validate YAML files
+        run: |
+          for file in policies/**/*.yaml; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              python -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+            fi
+          done
+
+      - name: Validate Python syntax
+        run: |
+          for file in src/**/*.py; do
+            if [ -f "$file" ]; then
+              echo "Validating $file"
+              python -m py_compile "$file" || exit 1
+            fi
+          done
+
+      - name: Validate Terraform
+        run: |
+          cd terraform
+          terraform fmt -check
+          terraform init -backend=false
+
+      - name: Check required artifacts
+        run: |
+          REQUIRED_FILES=(
+            "terraform/main.tf"
+            "src/policy-engine/main.py"
+            "src/remediator/main.py"
+            "policies/iam/agent-iam-policies.yaml"
+            "policies/semantic-governance/semantic-governance-policy.yaml"
+            "policies/model-armor/model-armor-config.yaml"
+            "audit-framework/agentic-ai-governance-framework.json"
+          )
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing required file: $file"
+              exit 1
+            fi
+          done
+          echo "✅ All required artifacts are present"
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy Terraform infrastructure
+        run: |
+          cd terraform
+          terraform init
+          terraform apply -auto-approve \
+            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+            -var="region=${{ secrets.GCP_REGION }}" \
+            -var="notification_email=${{ secrets.NOTIFICATION_EMAIL }}"
