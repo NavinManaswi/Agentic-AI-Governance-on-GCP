@@ -1,0 +1,251 @@
+{
+  "frameworkName": "Agentic AI Governance Framework (CSA ATF + OWASP) on GCP",
+  "frameworkDescription": "Automated evidence collection for agentic AI governance aligned with CSA Agentic Trust Framework and OWASP Agentic Top 10 2026 on Google Cloud Platform",
+  "frameworkType": "Standard",
+  "googleCloudServices": {
+    "identity": "Agent Identity + Cloud IAM",
+    "governance": "Agent Registry + Agent Gateway + Semantic Governance Policy",
+    "security": "Model Armor + VPC Service Controls",
+    "observability": "Cloud Monitoring + Cloud Logging",
+    "data": "Cloud DLP + Cloud KMS"
+  },
+  "controlSets": [
+    {
+      "name": "Identity & Access (CSA ATF Element 1)",
+      "description": "Zero-trust identity for AI agents using Agent Identity",
+      "googleServices": ["Agent Identity", "Cloud IAM", "Context-Aware Access"],
+      "controls": [
+        {
+          "id": "IDENTITY-001",
+          "name": "Agent Identity Verification",
+          "description": "All agents must have cryptographic Agent Identity",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'gemini_enterprise_agent' AND log_name LIKE '%identity%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "IDENTITY-002",
+          "name": "IAM Least Privilege",
+          "description": "Agents must have only the permissions they need",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'iam_role' AND log_name LIKE '%permission%'"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Authorization (CSA ATF Element 2)",
+      "description": "Semantic Governance Policy enforcement",
+      "googleServices": ["Semantic Governance Policy", "Agent Gateway"],
+      "controls": [
+        {
+          "id": "AUTHZ-001",
+          "name": "Semantic Governance Policy Enforcement",
+          "description": "SGP must be enforced for all agent actions",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'gemini_enterprise_agent' AND log_name LIKE '%semantic_governance%'"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Runtime Governance (CSA ATF Element 3)",
+      "description": "Agent Gateway and Model Armor runtime enforcement",
+      "googleServices": ["Agent Gateway", "Model Armor", "Vertex AI Agent Builder"],
+      "controls": [
+        {
+          "id": "RUNTIME-001",
+          "name": "Model Armor Protection",
+          "description": "Model Armor must protect all agent interactions",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'model_armor' AND log_name LIKE '%protection%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "RUNTIME-002",
+          "name": "Agent Gateway Enforcement",
+          "description": "Agent Gateway must enforce access policies",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'agent_gateway' AND log_name LIKE '%policy%'"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Observability (CSA ATF Element 4)",
+      "description": "Agent monitoring and telemetry",
+      "googleServices": ["Cloud Monitoring", "Cloud Logging"],
+      "controls": [
+        {
+          "id": "OBSERVE-001",
+          "name": "Agent Telemetry",
+          "description": "All agent actions must be logged",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'gemini_enterprise_agent'"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Data Boundaries (CSA ATF Element 5)",
+      "description": "VPC Service Controls and data governance",
+      "googleServices": ["VPC Service Controls", "Cloud DLP", "Cloud KMS"],
+      "controls": [
+        {
+          "id": "DATA-001",
+          "name": "VPC Service Controls",
+          "description": "VPC Service Controls with agent identities must be enforced",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'vpc_service_controls' AND log_name LIKE '%agent%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "DATA-002",
+          "name": "Data Loss Prevention",
+          "description": "Cloud DLP must scan agent inputs and outputs",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE resource.type = 'dlp' AND log_name LIKE '%agent%'"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "OWASP Agentic Top 10 2026",
+      "description": "OWASP Agentic Top 10 risk coverage on GCP",
+      "controls": [
+        {
+          "id": "OWASP-001",
+          "name": "ASI01 — Agent Goal Hijack",
+          "description": "Prevent goal hijacking using Semantic Governance Policy",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE log_name LIKE '%semantic_governance%' AND textPayload LIKE '%goal_hijack%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "OWASP-002",
+          "name": "ASI02 — Tool Misuse",
+          "description": "Prevent tool misuse using Agent Gateway",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE log_name LIKE '%agent_gateway%' AND textPayload LIKE '%tool_misuse%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "OWASP-003",
+          "name": "ASI03 — Identity & Privilege Abuse",
+          "description": "Prevent identity abuse using Agent Identity",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE log_name LIKE '%agent_identity%' AND textPayload LIKE '%abuse%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "OWASP-004",
+          "name": "ASI04 — Resource Exhaustion",
+          "description": "Prevent resource exhaustion using Cloud Monitoring",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudMonitoring",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `monitoring.googleapis.com` WHERE metric.type LIKE '%agent%' AND metric.type LIKE '%resource%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "OWASP-005",
+          "name": "ASI05 — Unexpected Code Execution",
+          "description": "Prevent unexpected code execution using Model Armor",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE log_name LIKE '%model_armor%' AND textPayload LIKE '%code_execution%'"
+              }
+            }
+          ]
+        },
+        {
+          "id": "OWASP-006",
+          "name": "ASI06 — Memory & Context Poisoning",
+          "description": "Prevent memory poisoning using Agent Registry and VPC Service Controls",
+          "evidenceSources": [
+            {
+              "sourceType": "GCP_CloudLogging",
+              "sourceKeyword": {
+                "keywordInputType": "SELECT",
+                "keywordValue": "SELECT * FROM `logging.googleapis.com` WHERE log_name LIKE '%agent_registry%' AND textPayload LIKE '%poisoning%'"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
